@@ -1,31 +1,122 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>J.A.R.V.I.S</title>
-<link rel="stylesheet" href="style.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#050b14;color:#7fe9ff;font-family:"Courier New",monospace;
+  display:flex;flex-direction:column;align-items:center;gap:14px;
+  padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom));
+  overflow-x:hidden}
+header{text-align:center}
+header h1{font-size:1.8rem;letter-spacing:.35em;color:#00d4ff;text-shadow:0 0 12px #00d4ff}
+header p{font-size:.7rem;letter-spacing:.4em;opacity:.7;margin-top:4px}
+.core{position:relative;width:130px;height:130px;flex:none}
+.ring,.center{position:absolute;border-radius:50%}
+.r1{inset:0;border:2px dashed #00d4ff;animation:spin 8s linear infinite}
+.r2{inset:16px;border:2px solid #0a8fb0;border-top-color:transparent;animation:spin 4s linear infinite reverse}
+.center{inset:42px;background:radial-gradient(circle,#b8f6ff,#00d4ff 60%,#006a85);
+  box-shadow:0 0 25px #00d4ff;animation:pulse 2s ease-in-out infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{50%{transform:scale(.85);opacity:.7}}
+.core-text{font-size:.75rem;letter-spacing:.3em;color:#00ffa6}
+.status{width:100%;max-width:480px;border:1px solid #0a4a5e;border-radius:8px;padding:10px 14px;background:#08141f}
+.status h2{font-size:.8rem;letter-spacing:.25em;margin-bottom:8px;color:#00d4ff}
+.row{display:flex;justify-content:space-between;font-size:.8rem;padding:3px 0}
+.on{color:#00ffa6}.off{color:#ff6b6b}
+.chat{width:100%;max-width:480px;flex:1;min-height:120px;overflow-y:auto;
+  border:1px solid #0a4a5e;border-radius:8px;padding:10px;background:#08141f;
+  display:flex;flex-direction:column;gap:8px}
+.msg{max-width:85%;padding:8px 12px;border-radius:10px;font-size:.85rem;line-height:1.4;word-wrap:break-word}
+.user{align-self:flex-end;background:#0a4a5e;color:#e8fbff}
+.bot{align-self:flex-start;border:1px solid #00d4ff;color:#7fe9ff}
+.input-area{width:100%;max-width:480px;display:flex;gap:8px}
+#msg{flex:1;min-width:0;padding:12px;background:#08141f;border:1px solid #0a8fb0;
+  border-radius:8px;color:#e8fbff;font:inherit;font-size:16px;outline:none}
+#msg:focus{border-color:#00d4ff;box-shadow:0 0 8px #00d4ff}
+#send{padding:0 18px;background:#00d4ff;color:#021018;border:0;border-radius:8px;
+  font:inherit;font-weight:bold;letter-spacing:.1em;cursor:pointer}
+#send:active{transform:scale(.96)}
+@media (prefers-reduced-motion:reduce){.ring,.center{animation:none}}
+</style>
 </head>
 <body>
- <header><h1>J.A.R.V.I.S</h1><p>MOBILE EDITION</p></header>
- <div class="core">
- <div class="ring r1"></div>
- <div class="ring r2"></div>
- <div class="center"></div>
- </div>
- <p class="core-text">CORE ACTIVE</p>
- <div class="status">
- <h2>SYSTEM STATUS</h2>
- <div class="row"><span>AI CORE</span><b class="on">● ONLINE</b></div>
- <div class="row"><span>NETWORK</span><b class="on">● ONLINE</b></div>
- <div class="row"><span>VOICE</span><b class="off">○ LOCKED</b></div>
- <div class="row"><span>MEMORY</span><b class="off">○ LOCKED</b></div>
- </div>
- <div class="chat" id="chat"></div>
- <div class="input-area">
- <input id="msg" placeholder="Ask J.A.R.V.I.S...">
- <button id="send">SEND</button>
- </div>
- <script src="script.js"></script>
+<header><h1>J.A.R.V.I.S</h1><p>MOBILE EDITION</p></header>
+
+<div class="core">
+  <div class="ring r1"></div>
+  <div class="ring r2"></div>
+  <div class="center"></div>
+</div>
+<p class="core-text">CORE ACTIVE</p>
+
+<div class="status">
+  <h2>SYSTEM STATUS</h2>
+  <div class="row"><span>AI CORE</span><b class="on">● ONLINE</b></div>
+  <div class="row"><span>NETWORK</span><b class="on" id="net">● ONLINE</b></div>
+  <div class="row"><span>VOICE</span><b class="off">○ LOCKED</b></div>
+  <div class="row"><span>MEMORY</span><b class="off">○ LOCKED</b></div>
+</div>
+
+<div class="chat" id="chat" aria-live="polite"></div>
+
+<div class="input-area">
+  <input id="msg" type="text" placeholder="Ask J.A.R.V.I.S..." autocomplete="off">
+  <button id="send" type="button">SEND</button>
+</div>
+
+<script>
+(function () {
+  var chat = document.getElementById("chat");
+  var input = document.getElementById("msg");
+  var sendBtn = document.getElementById("send");
+  var net = document.getElementById("net");
+
+  function add(text, who) {
+    var d = document.createElement("div");
+    d.className = "msg " + who;
+    d.textContent = text;
+    chat.appendChild(d);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  function reply(q) {
+    var t = q.toLowerCase();
+    if (/\b(hi|hello|hey)\b/.test(t)) return "Hello. All systems are standing by.";
+    if (t.indexOf("time") > -1) return "The time is " + new Date().toLocaleTimeString() + ".";
+    if (t.indexOf("date") > -1 || t.indexOf("day") > -1) return "Today is " + new Date().toLocaleDateString() + ".";
+    if (t.indexOf("status") > -1) return "AI core online. Voice and memory are locked.";
+    if (t.indexOf("name") > -1 || t.indexOf("who") > -1) return "I am J.A.R.V.I.S, mobile edition.";
+    return "I heard: \"" + q + "\". Connect an AI backend to enable full answers.";
+  }
+
+  function send() {
+    var q = input.value.trim();
+    if (!q) return;
+    add(q, "user");
+    input.value = "";
+    setTimeout(function () { add(reply(q), "bot"); }, 400);
+    input.focus();
+  }
+
+  function updateNet() {
+    var on = navigator.onLine;
+    net.textContent = on ? "● ONLINE" : "○ OFFLINE";
+    net.className = on ? "on" : "off";
+  }
+
+  sendBtn.addEventListener("click", send);
+  input.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { e.preventDefault(); send(); }
+  });
+  window.addEventListener("online", updateNet);
+  window.addEventListener("offline", updateNet);
+  updateNet();
+  add("J.A.R.V.I.S online. How can I help?", "bot");
+})();
+</script>
 </body>
 </html>
