@@ -1,31 +1,388 @@
+
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>J.A.R.V.I.S</title>
-<link rel="stylesheet" href="style.css">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050b14">
+<meta name="description" content="J.A.R.V.I.S Mobile AI Assistant">
+<title>J.A.R.V.I.S - Mobile Edition</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    width: 100%;
+    min-height: 100%;
+}
+
+body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: #050b14;
+    color: #7fe9ff;
+    font-family: "Courier New", monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: max(16px, env(safe-area-inset-top)) 16px
+             max(16px, env(safe-area-inset-bottom));
+}
+
+header {
+    text-align: center;
+}
+
+header h1 {
+    font-size: 1.8rem;
+    letter-spacing: .25em;
+    color: #00d4ff;
+    text-shadow: 0 0 12px #00d4ff;
+}
+
+header p {
+    font-size: .7rem;
+    letter-spacing: .4em;
+    opacity: .7;
+    margin-top: 4px;
+}
+
+.core {
+    position: relative;
+    width: 130px;
+    height: 130px;
+    flex: none;
+}
+
+.ring, .center {
+    position: absolute;
+    border-radius: 50%;
+}
+
+.r1 {
+    inset: 0;
+    border: 2px dashed #00d4ff;
+    animation: spin 8s linear infinite;
+}
+
+.r2 {
+    inset: 16px;
+    border: 2px solid #0a8fb0;
+    border-top-color: transparent;
+    animation: spin 4s linear infinite reverse;
+}
+
+.center {
+    inset: 42px;
+    background: radial-gradient(circle, #b8f6ff, #00d4ff 60%, #006a85);
+    box-shadow: 0 0 25px #00d4ff;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    50% { transform: scale(.85); opacity: .7; }
+}
+
+.core-text {
+    font-size: .75rem;
+    letter-spacing: .3em;
+    color: #00ffa6;
+}
+
+.status {
+    width: 100%;
+    max-width: 480px;
+    border: 1px solid #0a4a5e;
+    border-radius: 8px;
+    padding: 10px 14px;
+    background: #08141f;
+}
+
+.status h2 {
+    font-size: .8rem;
+    letter-spacing: .25em;
+    margin-bottom: 8px;
+    color: #00d4ff;
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    font-size: .8rem;
+    padding: 3px 0;
+}
+
+.on { color: #00ffa6; }
+.off { color: #ff6b6b; }
+
+.chat {
+    width: 100%;
+    max-width: 480px;
+    flex: 1;
+    min-height: 120px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border: 1px solid #0a4a5e;
+    border-radius: 8px;
+    padding: 10px;
+    background: #08141f;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    scroll-behavior: smooth;
+}
+
+.msg {
+    max-width: 85%;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: .85rem;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.user {
+    align-self: flex-end;
+    background: #0a4a5e;
+    color: #e8fbff;
+}
+
+.bot {
+    align-self: flex-start;
+    border: 1px solid #00d4ff;
+    color: #7fe9ff;
+}
+
+.typing {
+    opacity: .7;
+    font-style: italic;
+}
+
+.input-area {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    gap: 8px;
+}
+
+#msg {
+    flex: 1;
+    min-width: 0;
+    padding: 12px;
+    background: #08141f;
+    border: 1px solid #0a8fb0;
+    border-radius: 8px;
+    color: #e8fbff;
+    font: inherit;
+    font-size: 16px;
+    outline: none;
+}
+
+#msg:focus {
+    border-color: #00d4ff;
+    box-shadow: 0 0 8px #00d4ff;
+}
+
+#send {
+    padding: 0 18px;
+    background: #00d4ff;
+    color: #021018;
+    border: 0;
+    border-radius: 8px;
+    font: inherit;
+    font-weight: bold;
+    letter-spacing: .1em;
+    cursor: pointer;
+}
+
+#send:disabled {
+    opacity: .5;
+}
+
+@media (max-height: 650px) {
+    .core {
+        width: 90px;
+        height: 90px;
+    }
+    .center { inset: 29px; }
+    .r2 { inset: 11px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ring, .center { animation: none; }
+}
+</style>
 </head>
+
 <body>
- <header><h1>J.A.R.V.I.S</h1><p>MOBILE EDITION</p></header>
- <div class="core">
- <div class="ring r1"></div>
- <div class="ring r2"></div>
- <div class="center"></div>
- </div>
- <p class="core-text">CORE ACTIVE</p>
- <div class="status">
- <h2>SYSTEM STATUS</h2>
- <div class="row"><span>AI CORE</span><b class="on">● ONLINE</b></div>
- <div class="row"><span>NETWORK</span><b class="on">● ONLINE</b></div>
- <div class="row"><span>VOICE</span><b class="off">○ LOCKED</b></div>
- <div class="row"><span>MEMORY</span><b class="off">○ LOCKED</b></div>
- </div>
- <div class="chat" id="chat"></div>
- <div class="input-area">
- <input id="msg" placeholder="Ask J.A.R.V.I.S...">
- <button id="send">SEND</button>
- </div>
- <script src="script.js"></script>
+
+<header>
+    <h1>J.A.R.V.I.S</h1>
+    <p>MOBILE EDITION</p>
+</header>
+
+<div class="core">
+    <div class="ring r1"></div>
+    <div class="ring r2"></div>
+    <div class="center"></div>
+</div>
+
+<p class="core-text">CORE ACTIVE</p>
+
+<div class="status">
+    <h2>SYSTEM STATUS</h2>
+
+    <div class="row">
+        <span>AI CORE</span>
+        <b class="on">● DEMO MODE</b>
+    </div>
+
+    <div class="row">
+        <span>NETWORK</span>
+        <b class="on" id="net">● ONLINE</b>
+    </div>
+
+    <div class="row">
+        <span>VOICE</span>
+        <b class="off">○ LOCKED</b>
+    </div>
+
+    <div class="row">
+        <span>MEMORY</span>
+        <b class="off">○ LOCKED</b>
+    </div>
+</div>
+
+<div class="chat" id="chat" aria-live="polite"></div>
+
+<div class="input-area">
+    <input
+        id="msg"
+        type="text"
+        placeholder="Ask J.A.R.V.I.S..."
+        autocomplete="off"
+        aria-label="Enter your message"
+    >
+    <button id="send" type="button">SEND</button>
+</div>
+
+<script>
+(function () {
+    "use strict";
+
+    const chat = document.getElementById("chat");
+    const input = document.getElementById("msg");
+    const sendBtn = document.getElementById("send");
+    const net = document.getElementById("net");
+
+    if (!chat || !input || !sendBtn || !net) {
+        console.error("J.A.R.V.I.S: Required elements missing.");
+        return;
+    }
+
+    function add(text, who) {
+        const d = document.createElement("div");
+        d.className = "msg " + who;
+        d.textContent = text;
+        chat.appendChild(d);
+        chat.scrollTop = chat.scrollHeight;
+        return d;
+    }
+
+    function reply(question) {
+        const t = question.toLowerCase();
+
+        if (/\b(hi|hello|hey)\b/.test(t))
+            return "Hello, Boss. All systems are standing by.";
+
+        if (/\b(time|clock)\b/.test(t))
+            return "Current time: " + new Date().toLocaleTimeString();
+
+        if (/\b(date|today|day)\b/.test(t))
+            return "Today's date: " + new Date().toLocaleDateString();
+
+        if (/\b(status|system)\b/.test(t))
+            return "J.A.R.V.I.S operational. Network: " +
+                (navigator.onLine ? "Online." : "Offline.") +
+                " AI backend: Demo mode.";
+
+        if (/\b(name|who are you)\b/.test(t))
+            return "I am J.A.R.V.I.S, your personal mobile assistant.";
+
+        if (/\b(thank you|thanks)\b/.test(t))
+            return "You're welcome, Boss. Always at your service.";
+
+        if (/\bhelp\b/.test(t))
+            return "I can answer basic greetings, date, time and system status. Connect an AI backend for advanced answers.";
+
+        return "I received your message: \"" + question +
+            "\". Connect a Gemini AI backend for intelligent answers.";
+    }
+
+    function send() {
+        const question = input.value.trim();
+
+        if (!question || sendBtn.disabled) return;
+
+        add(question, "user");
+        input.value = "";
+
+        sendBtn.disabled = true;
+        sendBtn.textContent = "WAIT...";
+
+        const typing = add(
+            "J.A.R.V.I.S is thinking...",
+            "bot typing"
+        );
+
+        setTimeout(function () {
+            try {
+                typing.className = "msg bot";
+                typing.textContent = reply(question);
+            } catch (error) {
+                console.error(error);
+                typing.textContent = "Sorry, Boss. An error occurred.";
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.textContent = "SEND";
+                chat.scrollTop = chat.scrollHeight;
+            }
+        }, 600);
+    }
+
+    function updateNet() {
+        const online = navigator.onLine;
+        net.textContent = online ? "● ONLINE" : "○ OFFLINE";
+        net.className = online ? "on" : "off";
+    }
+
+    sendBtn.addEventListener("click", send);
+
+    input.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            send();
+        }
+    });
+
+    window.addEventListener("online", updateNet);
+    window.addEventListener("offline", updateNet);
+
+    updateNet();
+
+    add("J.A.R.V.I.S online. How may I assist you, Boss?", "bot");
+
+})();
+</script>
+
 </body>
 </html>
