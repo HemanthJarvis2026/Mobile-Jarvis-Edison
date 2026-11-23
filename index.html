@@ -1,38 +1,31 @@
-function setupKey() {
-  const key = prompt("Enter your Gemini API key:");
-  if (key) {
-    localStorage.setItem("gemini_key", key.trim());
-    alert("Key saved. AI core online.");
-    location.reload();
-  }
-}
-
-// click the title or the orb
-document.querySelectorAll("h1, .orb, #orb, .core").forEach(el => {
-  el.addEventListener("click", setupKey);
-});
-
-// update status on load
-if (localStorage.getItem("gemini_key")) {
-  // change your DEMO MODE text to ONLINE here
-  document.querySelectorAll("*").forEach(el => {
-    if (el.children.length === 0 && el.textContent.trim() === "DEMO MODE") {
-      el.textContent = "ONLINE";
-    }
-  });
-}
-
-async function askJarvis(message) {
-  const key = localStorage.getItem("gemini_key");
-  if (!key) return "Demo mode. Tap the J.A.R.V.I.S title to add your key.";
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: [{ parts: [{ text: message }] }] })
-    }
-  );
-  const data = await res.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || "Error: " + (data.error?.message || "no reply");
-}
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>J.A.R.V.I.S</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+ <header><h1>J.A.R.V.I.S</h1><p>MOBILE EDITION</p></header>
+ <div class="core">
+ <div class="ring r1"></div>
+ <div class="ring r2"></div>
+ <div class="center"></div>
+ </div>
+ <p class="core-text">CORE ACTIVE</p>
+ <div class="status">
+ <h2>SYSTEM STATUS</h2>
+ <div class="row"><span>AI CORE</span><b class="on">● ONLINE</b></div>
+ <div class="row"><span>NETWORK</span><b class="on">● ONLINE</b></div>
+ <div class="row"><span>VOICE</span><b class="off">○ LOCKED</b></div>
+ <div class="row"><span>MEMORY</span><b class="off">○ LOCKED</b></div>
+ </div>
+ <div class="chat" id="chat"></div>
+ <div class="input-area">
+ <input id="msg" placeholder="Ask J.A.R.V.I.S...">
+ <button id="send">SEND</button>
+ </div>
+ <script src="script.js"></script>
+</body>
+</html>
