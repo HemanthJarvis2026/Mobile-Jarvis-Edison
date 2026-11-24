@@ -2,20 +2,27 @@
 (function () {
     "use strict";
 
-    // GEMINI 3.8 FLASH
+    // =====================================
+    // GEMINI API CONFIGURATION
+    // =====================================
+
     const MODEL = "gemini-3.8-flash";
 
     const API_URL =
-        "https://generativelanguage.googleapis.com/v1beta/interactions";
+        "https://generativelanguage.googleapis.com/v1beta/models/" +
+        MODEL + ":generateContent";
 
-    // ELEMENTS
+    // =====================================
+    // HTML ELEMENTS
+    // =====================================
+
     const chat = document.getElementById("chat");
     const input = document.getElementById("msg");
     const sendBtn = document.getElementById("send");
-    const micBtn = document.getElementById("mic-btn");
 
     const core = document.getElementById("jarvisCore");
     const dialog = document.getElementById("apiDialog");
+
     const keyInput = document.getElementById("geminiKey");
 
     const saveBtn = document.getElementById("saveApiKey");
@@ -23,31 +30,49 @@
 
     const apiMessage = document.getElementById("apiMessage");
     const aiStatus = document.getElementById("aiStatus");
+
     const coreText = document.getElementById("coreText");
     const net = document.getElementById("net");
 
-    let apiKey = "";
-    let history = [];
-    let recognition = null;
-    let isListening = false;
+    // =====================================
+    // VARIABLES
+    // =====================================
 
-    // CHAT DISPLAY
+    let apiKey = "";
+    let conversation = [];
+
+    // =====================================
+    // DISPLAY CHAT MESSAGES
+    // =====================================
+
     function addMessage(message, type) {
+
         const element = document.createElement("div");
+
         element.className = "msg " + type;
         element.textContent = message;
 
         chat.appendChild(element);
+
         chat.scrollTop = chat.scrollHeight;
 
         return element;
     }
 
-    // OPEN API POPUP
+    // =====================================
+    // OPEN GEMINI CONFIGURATION
+    // =====================================
+
     function openConfig() {
+
         if (!dialog.open) {
+
             apiMessage.textContent = "";
+
+            keyInput.value = "";
+
             dialog.showModal();
+
             keyInput.focus();
         }
     }
@@ -55,32 +80,51 @@
     core.addEventListener("click", openConfig);
 
     core.addEventListener("keydown", function (event) {
+
         if (event.key === "Enter" || event.key === " ") {
+
             event.preventDefault();
+
             openConfig();
         }
     });
 
     closeBtn.addEventListener("click", function () {
+
         dialog.close();
+
     });
 
-    // UPDATE STATUS
+    // =====================================
+    // UPDATE SYSTEM STATUS
+    // =====================================
+
     function setActive(active) {
-        aiStatus.textContent = active
-            ? "● GEMINI ACTIVE"
-            : "○ API KEY REQUIRED";
 
-        aiStatus.className = active ? "on" : "off";
+        if (active) {
 
-        coreText.textContent = active
-            ? "GEMINI AI CONNECTED"
-            : "CORE ACTIVE - DEMO";
+            aiStatus.textContent = "● GEMINI ACTIVE";
+            aiStatus.className = "on";
+
+            coreText.textContent = "GEMINI AI CONNECTED";
+
+        } else {
+
+            aiStatus.textContent = "○ API KEY REQUIRED";
+            aiStatus.className = "off";
+
+            coreText.textContent = "CORE ACTIVE - DEMO";
+        }
     }
 
-    // GEMINI INTERACTIONS API
-    async function callGemini(prompt, key) {
+    // =====================================
+    // GEMINI API REQUEST
+    // =====================================
+
+    async function callGemini(contents, key) {
+
         const response = await fetch(API_URL, {
+
             method: "POST",
 
             headers: {
@@ -89,9 +133,22 @@
             },
 
             body: JSON.stringify({
-                model: MODEL,
-                input: prompt,
-                store: false
+
+                systemInstruction: {
+                    parts: [{
+                        text:
+                            "You are J.A.R.V.I.S, an intelligent " +
+                            "personal AI assistant. Address the user " +
+                            "as Boss. Be helpful, clear and informative."
+                    }]
+                },
+
+                contents: contents,
+
+                generationConfig: {
+                    temperature: 0.7,
+                    maxOutputTokens: 1024
+                }
             })
         });
 
@@ -100,99 +157,170 @@
         try {
             data = await response.json();
         } catch {
-            throw new Error("Invalid response from Gemini.");
+            throw new Error("Invalid response received from Gemini.");
         }
 
         if (!response.ok) {
+
+            const message =
+                data.error?.message ||
+                "Gemini API request failed.";
+
             throw new Error(
-                "HTTP " + response.status + ": " +
-                (data.error?.message || "Gemini request failed.")
+                "HTTP " + response.status + ": " + message
             );
         }
 
-        // Read model output
-        const answer = (data.output || [])
-            .filter(step => step.type === "model_output")
-            .flatMap(step => step.content || [])
-            .filter(part => part.type === "text")
-            .map(part => part.text || "")
-            .join("\n")
+        const answer = data.candidates?.[0]?.content?.parts
+            ?.map(part => part.text || "")
+            .join("")
             .trim();
 
         if (!answer) {
-            throw new Error("Gemini returned no text.");
+
+            const reason =
+                data.promptFeedback?.blockReason ||
+                data.candidates?.[0]?.finishReason ||
+                "No text returned";
+
+            throw new Error(
+                "Gemini returned no text. Reason: " + reason
+            );
         }
 
         return answer;
     }
 
-    // ACTIVATE JARVIS
+    // =====================================
+    // ACTIVATE JARVIS / VERIFY API KEY
+    // =====================================
+
     saveBtn.addEventListener("click", async function () {
+
         const enteredKey = keyInput.value.trim();
 
         if (!enteredKey) {
-            apiMessage.textContent = "Please enter your API key.";
+
+            apiMessage.textContent =
+                "Please enter your Gemini API key.";
+
             return;
         }
 
         saveBtn.disabled = true;
         saveBtn.textContent = "CONNECTING...";
-        apiMessage.textContent = "Verifying Gemini connection...";
+
+        apiMessage.textContent =
+            "Testing Gemini API connection...";
 
         try {
-            await callGemini(
-                "Reply with exactly: JARVIS CONNECTION SUCCESSFUL",
+
+            const testAnswer = await callGemini(
+                [{
+                    role: "user",
+                    parts: [{
+                        text: "Reply with exactly: JARVIS CONNECTION SUCCESSFUL"
+                    }]
+                }],
                 enteredKey
             );
 
-            sessionStorage.setItem("GEMINI_API_KEY", enteredKey);
+            // Store key only after successful verification
+
+            sessionStorage.setItem(
+                "GEMINI_API_KEY",
+                enteredKey
+            );
 
             apiKey = enteredKey;
-            history = [];
+
+            conversation = [];
 
             setActive(true);
+
             dialog.close();
+
             keyInput.value = "";
 
             addMessage(
-                "Gemini successfully connected. " +
-                "J.A.R.V.I.S is ready, Boss.",
+                "Gemini AI successfully connected. " +
+                "J.A.R.V.I.S is fully operational, Boss.",
                 "bot"
             );
 
         } catch (error) {
-            console.error(error);
+
+            console.error("Gemini connection error:", error);
+
             apiMessage.textContent = error.message;
+
             setActive(false);
 
         } finally {
+
             saveBtn.disabled = false;
+
             saveBtn.textContent = "ACTIVATE JARVIS";
+
         }
     });
 
-    // RESTORE SESSION KEY
+    // =====================================
+    // RESTORE API KEY FROM SESSION
+    // =====================================
+
     try {
-        apiKey = sessionStorage.getItem("GEMINI_API_KEY") || "";
+
+        apiKey =
+            sessionStorage.getItem("GEMINI_API_KEY") || "";
+
     } catch (error) {
-        console.warn(error);
+
+        console.warn("Session storage unavailable.", error);
+
     }
 
-    setActive(Boolean(apiKey));
+    if (apiKey) {
 
-    // SEND CHAT MESSAGE
+        setActive(true);
+
+        addMessage(
+            "Saved Gemini key detected. Welcome back, Boss.",
+            "bot"
+        );
+
+    } else {
+
+        setActive(false);
+
+    }
+
+    // =====================================
+    // SEND MESSAGE TO GEMINI
+    // =====================================
+
     async function sendMessage() {
+
         const question = input.value.trim();
 
-        if (!question || sendBtn.disabled) return;
+        if (!question || sendBtn.disabled) {
+            return;
+        }
 
         if (!apiKey) {
-            addMessage("Please connect Gemini API first, Boss.", "bot");
+
+            addMessage(
+                "Please configure your Gemini API key first, Boss.",
+                "bot"
+            );
+
             openConfig();
+
             return;
         }
 
         addMessage(question, "user");
+
         input.value = "";
 
         sendBtn.disabled = true;
@@ -203,154 +331,127 @@
             "bot typing"
         );
 
-        // Include recent conversation context
-        const prompt = [
-            "You are J.A.R.V.I.S, a helpful personal AI assistant.",
-            "Address the user as Boss.",
-            "Answer clearly and helpfully.",
-            "",
-            ...history,
-            "User: " + question,
-            "J.A.R.V.I.S:"
-        ].join("\n");
+        const updatedConversation = [
+            ...conversation,
+            {
+                role: "user",
+                parts: [{ text: question }]
+            }
+        ];
 
         try {
-            const answer = await callGemini(prompt, apiKey);
 
-            typing.className = "msg bot";
-            typing.textContent = answer;
-
-            history.push(
-                "User: " + question,
-                "J.A.R.V.I.S: " + answer
+            const answer = await callGemini(
+                updatedConversation,
+                apiKey
             );
 
-            if (history.length > 20) {
-                history = history.slice(-20);
+            typing.className = "msg bot";
+
+            typing.textContent = answer;
+
+            // Save successful conversation history
+
+            conversation = [
+                ...updatedConversation,
+                {
+                    role: "model",
+                    parts: [{ text: answer }]
+                }
+            ];
+
+            // Keep latest 20 messages
+
+            if (conversation.length > 20) {
+
+                conversation = conversation.slice(-20);
+
             }
 
         } catch (error) {
-            typing.className = "msg bot";
-            typing.textContent = "Gemini Error: " + error.message;
 
-            console.error(error);
+            console.error("JARVIS error:", error);
+
+            typing.className = "msg bot";
+
+            typing.textContent =
+                "Gemini API Error: " + error.message;
+
+            // Reset key if authentication fails
 
             if (/HTTP (400|401|403)/.test(error.message)) {
+
                 apiKey = "";
 
-                sessionStorage.removeItem("GEMINI_API_KEY");
+                try {
+
+                    sessionStorage.removeItem("GEMINI_API_KEY");
+
+                } catch (storageError) {
+
+                    console.warn(storageError);
+
+                }
+
                 setActive(false);
+
+                addMessage(
+                    "Please check your API key and reconnect.",
+                    "bot"
+                );
             }
 
         } finally {
+
             sendBtn.disabled = false;
+
             sendBtn.textContent = "SEND";
+
+            input.focus();
+
             chat.scrollTop = chat.scrollHeight;
+
         }
     }
+
+    // =====================================
+    // SEND BUTTON
+    // =====================================
 
     sendBtn.addEventListener("click", sendMessage);
 
+    // ENTER KEY SUPPORT
+
     input.addEventListener("keydown", function (event) {
+
         if (event.key === "Enter") {
+
             event.preventDefault();
+
             sendMessage();
+
         }
+
     });
 
-    // MICROPHONE / VOICE RECOGNITION
-    const SpeechRecognition =
-        window.SpeechRecognition ||
-        window.webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-        micBtn.title = "Speech recognition is not supported";
-    }
-
-    if (SpeechRecognition) {
-        recognition = new SpeechRecognition();
-
-        recognition.lang = "en-IN";
-        recognition.continuous = false;
-        recognition.interimResults = false;
-        recognition.maxAlternatives = 1;
-
-        recognition.onstart = function () {
-            isListening = true;
-            micBtn.classList.add("listening");
-            micBtn.textContent = "🔴";
-            coreText.textContent = "LISTENING...";
-        };
-
-        recognition.onresult = function (event) {
-            const transcript =
-                event.results[0][0].transcript;
-
-            input.value = transcript;
-            input.focus();
-
-            addMessage("Voice captured: " + transcript, "bot");
-        };
-
-        recognition.onerror = function (event) {
-            console.error("Microphone error:", event.error);
-
-            if (event.error === "not-allowed") {
-                addMessage(
-                    "Microphone permission denied. Allow microphone access in Chrome site settings.",
-                    "bot"
-                );
-            } else {
-                addMessage(
-                    "Voice recognition error: " + event.error,
-                    "bot"
-                );
-            }
-        };
-
-        recognition.onend = function () {
-            isListening = false;
-            micBtn.classList.remove("listening");
-            micBtn.textContent = "🎙️";
-
-            coreText.textContent = apiKey
-                ? "GEMINI AI CONNECTED"
-                : "CORE ACTIVE - DEMO";
-        };
-
-        micBtn.addEventListener("click", function () {
-            if (isListening) {
-                recognition.stop();
-                return;
-            }
-
-            try {
-                recognition.start();
-            } catch (error) {
-                addMessage(
-                    "Unable to start microphone. Please try again.",
-                    "bot"
-                );
-            }
-        });
-    } else {
-        micBtn.addEventListener("click", function () {
-            addMessage(
-                "Speech recognition is not supported in this browser. Try Google Chrome.",
-                "bot"
-            );
-        });
-    }
-
+    // =====================================
     // NETWORK STATUS
+    // =====================================
+
     function updateNetwork() {
+
         const online = navigator.onLine;
 
-        net.textContent = online ? "● ONLINE" : "○ OFFLINE";
+        net.textContent = online
+            ? "● ONLINE"
+            : "○ OFFLINE";
+
         net.className = online ? "on" : "off";
+
     }
 
     window.addEventListener("online", updateNetwork);
+
     window.addEventListener("offline", updateNetwork);
 
     updateNetwork();
