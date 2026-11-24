@@ -80,7 +80,7 @@
 
     // GEMINI INTERACTIONS API
     async function callGemini(prompt, key) {
-        const response = await fetch(API_URL, {
+        const response = await fetchWithRetry(API_URL, options); {
             method: "POST",
 
             headers: {
