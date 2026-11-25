@@ -2,136 +2,1203 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#050b14">
-  <title>J.A.R.V.I.S - Mobile Edition</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050b14">
+<meta name="description" content="JARVIS AI Mobile Assistant">
+<title>J.A.R.V.I.S - Mobile Edition</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #050b14;
+    color: #78eaff;
+    font-family: 'Orbitron', sans-serif;
+    min-height: 100vh;
+}
+
+.app {
+    width: 100%;
+    max-width: 700px;
+    margin: auto;
+    padding: 25px 20px 40px;
+}
+
+/* HEADER */
+
+.header {
+    text-align: center;
+    margin: 15px 0 35px;
+}
+
+.header h1 {
+    color: #00dfff;
+    font-size: clamp(30px, 8vw, 48px);
+    letter-spacing: 8px;
+    text-shadow: 0 0 20px #00dfff;
+}
+
+.header p {
+    color: #83d7e8;
+    margin-top: 12px;
+    letter-spacing: 7px;
+    font-size: 17px;
+}
+
+/* GLOWING AI CORE */
+
+.core-section {
+    text-align: center;
+    margin: 35px 0;
+}
+
+.core {
+    width: 225px;
+    height: 225px;
+    position: relative;
+    border-radius: 50%;
+    border: 6px dashed #00dfff;
+    background: #06121d;
+    box-shadow:
+        0 0 20px #00dfff,
+        0 0 45px rgba(0, 210, 255, .5);
+    cursor: pointer;
+    touch-action: manipulation;
+    animation: rotateCore 15s linear infinite;
+    -webkit-tap-highlight-color: transparent;
+    z-index: 2;
+}
+
+.core-inner {
+    position: absolute;
+    inset: 30px;
+    border: 4px solid #087f9b;
+    border-left-color: transparent;
+    border-radius: 50%;
+}
+
+.core-center {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    background: radial-gradient(circle, #b9faff, #00cfff, #0089b7);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 35px #00dfff;
+}
+
+@keyframes rotateCore {
+    to { transform: rotate(360deg); }
+}
+
+#coreStatus {
+    margin-top: 28px;
+    color: #00ffb3;
+    font-size: 19px;
+    letter-spacing: 3px;
+}
+
+/* PANELS */
+
+.panel {
+    background: #081521;
+    border: 2px solid #16475c;
+    border-radius: 18px;
+    padding: 25px;
+    margin: 25px 0;
+    box-shadow: 0 0 12px rgba(0, 210, 255, .12);
+}
+
+.status-panel h2 {
+    color: #00dfff;
+    letter-spacing: 5px;
+    font-size: 25px;
+    margin-bottom: 25px;
+}
+
+.status-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin: 22px 0;
+    font-size: 16px;
+}
+
+.status-row strong {
+    font-size: 14px;
+    text-align: right;
+}
+
+.online {
+    color: #00ffb3;
+}
+
+.offline {
+    color: #ff727d;
+}
+
+/* CHAT */
+
+.chat-panel {
+    min-height: 390px;
+}
+
+.chat {
+    min-height: 340px;
+    max-height: 480px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.message {
+    padding: 20px;
+    border: 2px solid #00bfe9;
+    border-radius: 16px;
+    color: #8beeff;
+    font-size: 15px;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+}
+
+.message.user {
+    color: white;
+    border-color: #00ffb3;
+    align-self: flex-end;
+    max-width: 90%;
+}
+
+.message.ai {
+    align-self: stretch;
+}
+
+.message.error {
+    color: #ff858e;
+    border-color: #ff727d;
+}
+
+/* INPUT AREA */
+
+.input-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 25px;
+}
+
+#msg {
+    flex: 1;
+    min-width: 0;
+    padding: 19px 14px;
+    background: #081521;
+    border: 2px solid #1689a9;
+    border-radius: 15px;
+    color: white;
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+}
+
+#msg:focus {
+    border-color: #00dfff;
+    box-shadow: 0 0 12px #00bfff;
+}
+
+.mic-btn {
+    width: 50px;
+    height: 55px;
+    flex-shrink: 0;
+    border: 2px solid #00dfff;
+    background: #081521;
+    border-radius: 9px;
+    font-size: 23px;
+    cursor: pointer;
+}
+
+.mic-btn.listening {
+    background: #a51f35;
+    box-shadow: 0 0 15px #ff4455;
+}
+
+.send-btn {
+    color: #78eaff;
+    background: transparent;
+    border: none;
+    font-family: inherit;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+/* API POPUP */
+
+.api-overlay {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, .90);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 999999;
+    backdrop-filter: blur(8px);
+}
+
+.api-overlay[hidden] {
+    display: none !important;
+}
+
+.api-box {
+    width: 100%;
+    max-width: 430px;
+    max-height: 85vh;
+    overflow-y: auto;
+    background: #081521;
+    border: 2px solid #00dfff;
+    border-radius: 20px;
+    padding: 25px;
+    text-align: center;
+    box-shadow:
+        0 0 20px #00dfff,
+        0 0 50px rgba(0, 210, 255, .4);
+}
+
+.api-box h2 {
+    color: #00dfff;
+    font-size: 20px;
+    line-height: 1.6;
+}
+
+.api-box p {
+    margin: 15px 0;
+    font-size: 13px;
+}
+
+.api-box label {
+    display: block;
+    text-align: left;
+    margin: 20px 0 10px;
+    font-size: 12px;
+}
+
+.key-wrapper {
+    display: flex;
+    gap: 7px;
+}
+
+#geminiKey {
+    flex: 1;
+    min-width: 0;
+    padding: 14px 10px;
+    background: #020912;
+    border: 1px solid #00dfff;
+    color: white;
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.api-btn {
+    width: 100%;
+    padding: 14px;
+    margin-top: 15px;
+    border-radius: 8px;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+#toggleKey {
+    padding: 8px;
+    background: #102b3b;
+    color: #00dfff;
+    border: 1px solid #00dfff;
+    border-radius: 8px;
+    font-size: 11px;
+}
+
+.connect-btn {
+    background: #00dfff;
+    color: #001018;
+    border: none;
+    font-weight: bold;
+}
+
+.close-btn {
+    background: transparent;
+    color: #8beaff;
+    border: 1px solid #1689a9;
+}
+
+#keyError {
+    color: #ff727d;
+    font-size: 12px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+.api-box small {
+    display: block;
+    color: #90aab5;
+    margin-top: 15px;
+    line-height: 1.6;
+}
+
+button:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+/* MOBILE */
+
+@media(max-width: 420px) {
+    .app {
+        padding: 20px 14px 35px;
+    }
+
+    .header h1 {
+        letter-spacing: 6px;
+    }
+
+    .header p {
+        letter-spacing: 5px;
+    }
+
+    .core {
+        width: 195px;
+        height: 195px;
+    }
+
+    .panel {
+        padding: 20px;
+    }
+
+    .status-row {
+        font-size: 13px;
+    }
+
+    .status-row strong {
+        font-size: 11px;
+    }
+
+    .status-panel h2 {
+        font-size: 21px;
+    }
+
+    #msg {
+        font-size: 12px;
+        padding: 15px 10px;
+    }
+
+    .send-btn {
+        font-size: 13px;
+    }
+}
+</style>
 </head>
 
 <body>
 
-  <main class="app">
+<main class="app">
+
+    <!-- HEADER -->
 
     <header class="header">
-      <h1>J.A.R.V.I.S</h1>
-      <p>MOBILE EDITION</p>
+        <h1>J.A.R.V.I.S</h1>
+        <p>MOBILE EDITION</p>
     </header>
 
     <!-- AI CORE -->
-    <section class="core-section">
-      <button id="jarvisCore" class="core" type="button"
-              aria-label="Connect Gemini AI">
-        <span class="core-ring"></span>
-        <span class="core-inner"></span>
-        <span class="core-center"></span>
-      </button>
 
-      <p id="coreStatus">CORE ACTIVE - DEMO</p>
+    <section class="core-section">
+
+        <button
+            id="jarvisCore"
+            class="core"
+            type="button"
+            onclick="openApiPopup()"
+            aria-label="Open Gemini configuration">
+
+            <span class="core-inner"></span>
+            <span class="core-center"></span>
+
+        </button>
+
+        <p id="coreStatus">CORE ACTIVE - DEMO</p>
+
     </section>
 
     <!-- SYSTEM STATUS -->
+
     <section class="panel status-panel">
-      <h2>SYSTEM STATUS</h2>
 
-      <div class="status-row">
-        <span>AI CORE</span>
-        <strong id="aiStatus" class="offline">
-          ○ API KEY REQUIRED
-        </strong>
-      </div>
+        <h2>SYSTEM STATUS</h2>
 
-      <div class="status-row">
-        <span>NETWORK</span>
-        <strong id="networkStatus" class="online">
-          ● ONLINE
-        </strong>
-      </div>
+        <div class="status-row">
+            <span>AI CORE</span>
+            <strong id="aiStatus" class="offline">
+                ○ API KEY REQUIRED
+            </strong>
+        </div>
 
-      <div class="status-row">
-        <span>VOICE</span>
-        <strong id="voiceStatus" class="offline">
-          ○ LOCKED
-        </strong>
-      </div>
+        <div class="status-row">
+            <span>NETWORK</span>
+            <strong id="networkStatus" class="online">
+                ● ONLINE
+            </strong>
+        </div>
 
-      <div class="status-row">
-        <span>MEMORY</span>
-        <strong id="memoryStatus" class="offline">
-          ○ LOCKED
-        </strong>
-      </div>
+        <div class="status-row">
+            <span>VOICE</span>
+            <strong id="voiceStatus" class="offline">
+                ○ LOCKED
+            </strong>
+        </div>
+
+        <div class="status-row">
+            <span>MEMORY</span>
+            <strong id="memoryStatus" class="offline">
+                ○ LOCKED
+            </strong>
+        </div>
+
     </section>
 
     <!-- CHAT -->
+
     <section class="panel chat-panel">
-      <div id="chat" class="chat">
-        <div class="message ai">
-          J.A.R.V.I.S online.<br>
-          Tap the glowing AI CORE to connect Gemini AI, Boss.
+
+        <div id="chat" class="chat">
+
+            <div class="message ai">
+                J.A.R.V.I.S online.<br>
+                Tap the glowing AI CORE to connect Gemini AI, Boss.
+            </div>
+
         </div>
-      </div>
+
     </section>
 
     <!-- MESSAGE INPUT -->
+
     <section class="input-section">
-      <input
-        id="msg"
-        type="text"
-        placeholder="Ask J.A.R.V.I.S..."
-        autocomplete="off"
-      >
 
-      <button id="mic-btn" class="mic-btn"
-              type="button" aria-label="Start microphone">
-        🎙️
-      </button>
+        <input
+            id="msg"
+            type="text"
+            placeholder="Ask J.A.R.V.I.S..."
+            autocomplete="off">
 
-      <button id="send" class="send-btn" type="button">
-        SEND
-      </button>
+        <button
+            id="mic-btn"
+            class="mic-btn"
+            type="button"
+            onclick="toggleMicrophone()"
+            aria-label="Start microphone">
+            🎙️
+        </button>
+
+        <button
+            id="send"
+            class="send-btn"
+            type="button"
+            onclick="sendMessage()">
+            SEND
+        </button>
+
     </section>
 
-  </main>
+</main>
 
-  <!-- GEMINI API POPUP -->
-  <dialog id="apiDialog">
-    <div class="dialog-content">
+<!-- GEMINI API KEY POPUP -->
 
-      <h2>J.A.R.V.I.S CONFIGURATION</h2>
+<div
+    id="apiOverlay"
+    class="api-overlay"
+    hidden>
 
-      <p>CONNECT GEMINI AI CORE</p>
+    <div class="api-box">
 
-      <label for="geminiKey">GEMINI API KEY</label>
+        <h2>J.A.R.V.I.S CONFIGURATION</h2>
 
-      <div class="key-wrapper">
-        <input
-          id="geminiKey"
-          type="password"
-          placeholder="Enter your Gemini API key"
-          autocomplete="off"
-        >
+        <p>CONNECT GEMINI AI CORE</p>
 
-        <button id="toggleKey" type="button">
-          SHOW
+        <label for="geminiKey">ENTER GEMINI API KEY</label>
+
+        <div class="key-wrapper">
+
+            <input
+                id="geminiKey"
+                type="password"
+                placeholder="Paste your Gemini API key"
+                autocomplete="off">
+
+            <button
+                id="toggleKey"
+                type="button"
+                onclick="toggleApiVisibility()">
+                SHOW
+            </button>
+
+        </div>
+
+        <button
+            id="saveApiKey"
+            class="api-btn connect-btn"
+            type="button"
+            onclick="connectGemini()">
+            CONNECT AI CORE
         </button>
-      </div>
 
-      <button id="saveApiKey" class="primary-btn" type="button">
-        CONNECT AI CORE
-      </button>
+        <button
+            class="api-btn close-btn"
+            type="button"
+            onclick="closeApiPopup()">
+            CANCEL
+        </button>
 
-      <button id="closeDialog" class="secondary-btn" type="button">
-        CANCEL
-      </button>
+        <p id="keyError"></p>
 
-      <p id="keyError" class="error"></p>
-
-      <small>Your key is stored in this browser session only.</small>
+        <small>
+            API key is stored only in this browser session.
+            Do not share your API key.
+        </small>
 
     </div>
-  </dialog>
 
-  <script src="script.js"></script>
+</div>
+
+<script>
+
+/* =====================================
+   J.A.R.V.I.S CONFIGURATION
+===================================== */
+
+const GEMINI_MODEL = "gemini-2.5-flash";
+
+const GEMINI_ENDPOINT =
+    "https://generativelanguage.googleapis.com/v1beta/models/"
+    + GEMINI_MODEL + ":generateContent";
+
+let apiKey = sessionStorage.getItem("JARVIS_GEMINI_KEY") || "";
+
+let conversation = [];
+let busy = false;
+let recognition = null;
+let listening = false;
+
+const $ = id => document.getElementById(id);
+
+
+/* =====================================
+   API POPUP - DIRECT CLICK FIX
+===================================== */
+
+window.openApiPopup = function() {
+
+    $("keyError").textContent = "";
+    $("apiOverlay").hidden = false;
+
+    setTimeout(() => {
+        $("geminiKey").focus();
+    }, 150);
+
+    console.log("JARVIS API popup opened");
+
+};
+
+window.closeApiPopup = function() {
+
+    $("apiOverlay").hidden = true;
+
+};
+
+window.toggleApiVisibility = function() {
+
+    const field = $("geminiKey");
+
+    if (field.type === "password") {
+        field.type = "text";
+        $("toggleKey").textContent = "HIDE";
+    } else {
+        field.type = "password";
+        $("toggleKey").textContent = "SHOW";
+    }
+
+};
+
+
+/* =====================================
+   CHAT DISPLAY
+===================================== */
+
+function addMessage(message, type = "ai") {
+
+    const div = document.createElement("div");
+
+    div.className = "message " + type;
+    div.textContent = message;
+
+    $("chat").appendChild(div);
+
+    $("chat").scrollTop = $("chat").scrollHeight;
+
+    return div;
+
+}
+
+
+/* =====================================
+   SYSTEM STATUS
+===================================== */
+
+function setStatus(id, message, state) {
+
+    $(id).textContent = message;
+    $(id).className = state;
+
+}
+
+function updateStatus(connected) {
+
+    if (connected) {
+
+        setStatus("aiStatus", "● CONNECTED", "online");
+
+        setStatus("voiceStatus", "● READY", "online");
+
+        setStatus("memoryStatus", "● ACTIVE", "online");
+
+        $("coreStatus").textContent = "CORE ACTIVE - ONLINE";
+
+    } else {
+
+        setStatus("aiStatus", "○ API KEY REQUIRED", "offline");
+
+        setStatus("voiceStatus", "○ LOCKED", "offline");
+
+        setStatus("memoryStatus", "○ LOCKED", "offline");
+
+        $("coreStatus").textContent = "CORE ACTIVE - DEMO";
+
+    }
+
+}
+
+
+/* =====================================
+   GEMINI API REQUEST
+===================================== */
+
+async function askGemini(contents) {
+
+    const response = await fetch(GEMINI_ENDPOINT, {
+
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": apiKey
+        },
+
+        body: JSON.stringify({
+
+            systemInstruction: {
+                parts: [{
+                    text:
+                    "You are J.A.R.V.I.S, a helpful personal AI assistant. "
+                    + "Address the user as Boss when appropriate. "
+                    + "Give clear, intelligent and useful answers."
+                }]
+            },
+
+            contents: contents,
+
+            generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 2048
+            }
+
+        })
+
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+
+        throw new Error(
+            data.error?.message || "Gemini API error: " + response.status
+        );
+
+    }
+
+    const answer =
+        data.candidates?.[0]?.content?.parts
+        ?.map(part => part.text || "")
+        .join("")
+        .trim();
+
+    if (!answer) {
+
+        throw new Error(
+            "Gemini returned no text. Check the API response."
+        );
+
+    }
+
+    return answer;
+
+}
+
+
+/* =====================================
+   CONNECT GEMINI API
+===================================== */
+
+window.connectGemini = async function() {
+
+    const enteredKey = $("geminiKey").value.trim();
+
+    if (!enteredKey) {
+
+        $("keyError").textContent =
+            "Please enter your Gemini API key.";
+
+        return;
+
+    }
+
+    if (busy) return;
+
+    busy = true;
+
+    const button = $("saveApiKey");
+
+    button.disabled = true;
+    button.textContent = "CONNECTING...";
+
+    $("keyError").textContent = "";
+
+    const previousKey = apiKey;
+
+    apiKey = enteredKey;
+
+    try {
+
+        const result = await askGemini([{
+            role: "user",
+            parts: [{
+                text: "Reply with: J.A.R.V.I.S AI CORE CONNECTED."
+            }]
+        }]);
+
+        sessionStorage.setItem("JARVIS_GEMINI_KEY", enteredKey);
+
+        conversation = [];
+
+        updateStatus(true);
+
+        closeApiPopup();
+
+        $("geminiKey").value = "";
+
+        addMessage("J.A.R.V.I.S: " + result);
+
+    } catch (error) {
+
+        apiKey = previousKey;
+
+        $("keyError").textContent = error.message;
+
+        console.error("Gemini connection error:", error);
+
+    } finally {
+
+        busy = false;
+
+        button.disabled = false;
+
+        button.textContent = "CONNECT AI CORE";
+
+    }
+
+};
+
+
+/* =====================================
+   SEND CHAT MESSAGE
+===================================== */
+
+window.sendMessage = async function() {
+
+    const text = $("msg").value.trim();
+
+    if (!text || busy) return;
+
+    if (!apiKey) {
+
+        addMessage(
+            "Please tap the glowing AI CORE and connect your Gemini API key.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    if (!navigator.onLine) {
+
+        addMessage("Internet connection unavailable.", "error");
+
+        return;
+
+    }
+
+    $("msg").value = "";
+
+    addMessage("YOU: " + text, "user");
+
+    const loading = addMessage(
+        "J.A.R.V.I.S is processing your request, Boss..."
+    );
+
+    busy = true;
+
+    $("send").disabled = true;
+
+    try {
+
+        const contents = [
+            ...conversation.slice(-12),
+            {
+                role: "user",
+                parts: [{ text: text }]
+            }
+        ];
+
+        const answer = await askGemini(contents);
+
+        loading.textContent = answer;
+
+        conversation.push(
+            {
+                role: "user",
+                parts: [{ text: text }]
+            },
+            {
+                role: "model",
+                parts: [{ text: answer }]
+            }
+        );
+
+        if (conversation.length > 20) {
+            conversation = conversation.slice(-20);
+        }
+
+        speak(answer);
+
+    } catch (error) {
+
+        loading.textContent = "ERROR: " + error.message;
+
+        loading.classList.add("error");
+
+        console.error("Gemini chat error:", error);
+
+    } finally {
+
+        busy = false;
+
+        $("send").disabled = false;
+
+        $("msg").focus();
+
+    }
+
+};
+
+
+/* =====================================
+   ENTER KEY SUPPORT
+===================================== */
+
+$("msg").addEventListener("keydown", function(event) {
+
+    if (event.key === "Enter") {
+
+        event.preventDefault();
+
+        sendMessage();
+
+    }
+
+});
+
+$("geminiKey").addEventListener("keydown", function(event) {
+
+    if (event.key === "Enter") {
+
+        event.preventDefault();
+
+        connectGemini();
+
+    }
+
+});
+
+
+/* =====================================
+   TEXT TO SPEECH
+===================================== */
+
+function speak(text) {
+
+    if (!("speechSynthesis" in window)) return;
+
+    window.speechSynthesis.cancel();
+
+    const speech = new SpeechSynthesisUtterance(text);
+
+    speech.lang = "en-IN";
+    speech.rate = 1;
+    speech.pitch = 1;
+
+    window.speechSynthesis.speak(speech);
+
+}
+
+
+/* =====================================
+   SPEECH RECOGNITION
+===================================== */
+
+const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+if (SpeechRecognition) {
+
+    recognition = new SpeechRecognition();
+
+    recognition.lang = "en-IN";
+
+    recognition.continuous = false;
+
+    recognition.interimResults = false;
+
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = function() {
+
+        listening = true;
+
+        $("mic-btn").classList.add("listening");
+
+        $("mic-btn").textContent = "🔴";
+
+        setStatus("voiceStatus", "● LISTENING", "online");
+
+        addMessage("J.A.R.V.I.S: Listening, Boss...");
+
+    };
+
+    recognition.onresult = function(event) {
+
+        const transcript =
+            event.results[event.results.length - 1][0]
+            .transcript.trim();
+
+        $("msg").value = transcript;
+
+        sendMessage();
+
+    };
+
+    recognition.onerror = function(event) {
+
+        console.error("Speech error:", event.error);
+
+        let errorText = "Microphone error: " + event.error;
+
+        if (event.error === "not-allowed") {
+
+            errorText =
+                "Microphone permission denied. Allow microphone access in Chrome.";
+
+        } else if (event.error === "no-speech") {
+
+            errorText =
+                "No speech detected. Please try again.";
+
+        } else if (event.error === "network") {
+
+            errorText =
+                "Speech recognition network error. Check your internet.";
+
+        }
+
+        addMessage("J.A.R.V.I.S: " + errorText, "error");
+
+    };
+
+    recognition.onend = function() {
+
+        listening = false;
+
+        $("mic-btn").classList.remove("listening");
+
+        $("mic-btn").textContent = "🎙️";
+
+        setStatus(
+            "voiceStatus",
+            apiKey ? "● READY" : "○ LOCKED",
+            apiKey ? "online" : "offline"
+        );
+
+    };
+
+} else {
+
+    recognition = null;
+
+    $("mic-btn").disabled = true;
+
+    addMessage(
+        "Speech recognition is not supported in this browser.",
+        "error"
+    );
+
+}
+
+
+/* =====================================
+   MICROPHONE BUTTON
+===================================== */
+
+window.toggleMicrophone = async function() {
+
+    if (!apiKey) {
+
+        addMessage(
+            "Please connect Gemini AI CORE before using voice commands.",
+            "error"
+        );
+
+        openApiPopup();
+
+        return;
+
+    }
+
+    if (!recognition) {
+
+        addMessage(
+            "Speech recognition is not supported by this browser.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    if (listening) {
+
+        recognition.stop();
+
+        return;
+
+    }
+
+    if (busy) {
+
+        addMessage(
+            "Please wait for the current AI response to finish.",
+            "error"
+        );
+
+        return;
+
+    }
+
+    try {
+
+        if (navigator.mediaDevices?.getUserMedia) {
+
+            const stream =
+                await navigator.mediaDevices.getUserMedia({
+                    audio: true
+                });
+
+            stream.getTracks().forEach(track => track.stop());
+
+        }
+
+        recognition.start();
+
+    } catch (error) {
+
+        console.error("Microphone permission error:", error);
+
+        addMessage(
+            "Microphone access failed. Allow microphone permission in Chrome site settings.",
+            "error"
+        );
+
+    }
+
+};
+
+
+/* =====================================
+   NETWORK STATUS
+===================================== */
+
+function updateNetwork() {
+
+    setStatus(
+        "networkStatus",
+        navigator.onLine ? "● ONLINE" : "○ OFFLINE",
+        navigator.onLine ? "online" : "offline"
+    );
+
+}
+
+window.addEventListener("online", updateNetwork);
+
+window.addEventListener("offline", updateNetwork);
+
+
+/* =====================================
+   INITIALIZE JARVIS
+===================================== */
+
+updateStatus(false);
+
+updateNetwork();
+
+if (apiKey) {
+
+    addMessage(
+        "J.A.R.V.I.S: Previous session API key detected. Reconnect AI CORE to verify."
+    );
+
+}
+
+console.log("J.A.R.V.I.S Mobile Edition Loaded Successfully");
+
+</script>
+
 </body>
 </html>
