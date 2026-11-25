@@ -2,130 +2,136 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#050b14">
-    <meta name="description" content="J.A.R.V.I.S Mobile AI Assistant">
-
-    <title>J.A.R.V.I.S - Mobile Edition</title>
-
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#050b14">
+  <title>J.A.R.V.I.S - Mobile Edition</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <header>
-        <h1>J.A.R.V.I.S</h1>
-        <p>MOBILE EDITION</p>
+  <main class="app">
+
+    <header class="header">
+      <h1>J.A.R.V.I.S</h1>
+      <p>MOBILE EDITION</p>
     </header>
 
     <!-- AI CORE -->
+    <section class="core-section">
+      <button id="jarvisCore" class="core" type="button"
+              aria-label="Connect Gemini AI">
+        <span class="core-ring"></span>
+        <span class="core-inner"></span>
+        <span class="core-center"></span>
+      </button>
 
-    <div class="core"
-         id="jarvisCore"
-         role="button"
-         tabindex="0"
-         aria-label="Open Gemini API settings">
-
-        <div class="ring r1"></div>
-        <div class="ring r2"></div>
-        <div class="center"></div>
-
-    </div>
-
-    <p class="core-text" id="coreText">
-        CORE ACTIVE - DEMO
-    </p>
-
-    <!-- SYSTEM STATUS -->
-
-    <section class="status">
-
-        <h2>SYSTEM STATUS</h2>
-
-        <div class="row">
-            <span>AI CORE</span>
-            <b id="aiStatus" class="off">○ API KEY REQUIRED</b>
-        </div>
-
-        <div class="row">
-            <span>NETWORK</span>
-            <b id="net" class="on">● ONLINE</b>
-        </div>
-
-        <div class="row">
-            <span>VOICE</span>
-            <b class="off">○ LOCKED</b>
-        </div>
-
-        <div class="row">
-            <span>MEMORY</span>
-            <b class="off">○ LOCKED</b>
-        </div>
-
+      <p id="coreStatus">CORE ACTIVE - DEMO</p>
     </section>
 
-    <!-- CHAT WINDOW -->
+    <!-- SYSTEM STATUS -->
+    <section class="panel status-panel">
+      <h2>SYSTEM STATUS</h2>
 
-    <section class="chat" id="chat" aria-live="polite">
+      <div class="status-row">
+        <span>AI CORE</span>
+        <strong id="aiStatus" class="offline">
+          ○ API KEY REQUIRED
+        </strong>
+      </div>
 
-        <div class="msg bot">
-            J.A.R.V.I.S online.
-            Tap the glowing AI CORE to connect Gemini AI, Boss.
+      <div class="status-row">
+        <span>NETWORK</span>
+        <strong id="networkStatus" class="online">
+          ● ONLINE
+        </strong>
+      </div>
+
+      <div class="status-row">
+        <span>VOICE</span>
+        <strong id="voiceStatus" class="offline">
+          ○ LOCKED
+        </strong>
+      </div>
+
+      <div class="status-row">
+        <span>MEMORY</span>
+        <strong id="memoryStatus" class="offline">
+          ○ LOCKED
+        </strong>
+      </div>
+    </section>
+
+    <!-- CHAT -->
+    <section class="panel chat-panel">
+      <div id="chat" class="chat">
+        <div class="message ai">
+          J.A.R.V.I.S online.<br>
+          Tap the glowing AI CORE to connect Gemini AI, Boss.
         </div>
-
+      </div>
     </section>
 
     <!-- MESSAGE INPUT -->
+    <section class="input-section">
+      <input
+        id="msg"
+        type="text"
+        placeholder="Ask J.A.R.V.I.S..."
+        autocomplete="off"
+      >
 
-    <div class="input-area">
+      <button id="mic-btn" class="mic-btn"
+              type="button" aria-label="Start microphone">
+        🎙️
+      </button>
 
+      <button id="send" class="send-btn" type="button">
+        SEND
+      </button>
+    </section>
+
+  </main>
+
+  <!-- GEMINI API POPUP -->
+  <dialog id="apiDialog">
+    <div class="dialog-content">
+
+      <h2>J.A.R.V.I.S CONFIGURATION</h2>
+
+      <p>CONNECT GEMINI AI CORE</p>
+
+      <label for="geminiKey">GEMINI API KEY</label>
+
+      <div class="key-wrapper">
         <input
-            id="msg"
-            type="text"
-            placeholder="Ask J.A.R.V.I.S..."
-            autocomplete="off"
-            aria-label="Enter your message"
+          id="geminiKey"
+          type="password"
+          placeholder="Enter your Gemini API key"
+          autocomplete="off"
         >
 
-        <button id="mic-btn">🎙️</button>
-            SEND
+        <button id="toggleKey" type="button">
+          SHOW
         </button>
+      </div>
+
+      <button id="saveApiKey" class="primary-btn" type="button">
+        CONNECT AI CORE
+      </button>
+
+      <button id="closeDialog" class="secondary-btn" type="button">
+        CANCEL
+      </button>
+
+      <p id="keyError" class="error"></p>
+
+      <small>Your key is stored in this browser session only.</small>
 
     </div>
+  </dialog>
 
-    <!-- GEMINI API CONFIGURATION -->
-
-    <dialog id="apiDialog">
-
-        <h2>J.A.R.V.I.S CONFIG</h2>
-
-        <p>
-            Enter your Google Gemini API Key
-            to activate your AI assistant.
-        </p>
-
-        <input
-            type="password"
-            id="geminiKey"
-            placeholder="Enter Gemini API Key"
-            autocomplete="off"
-            spellcheck="false"
-        >
-
-        <button id="saveApiKey" type="button">
-            ACTIVATE JARVIS
-        </button>
-
-        <button id="closeApiDialog" type="button">
-            CANCEL
-        </button>
-
-        <p id="apiMessage" aria-live="polite"></p>
-
-    </dialog>
-
-    <script src="script.js"></script>
-
+  <script src="script.js"></script>
 </body>
 </html>
