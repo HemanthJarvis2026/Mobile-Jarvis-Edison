@@ -98,7 +98,7 @@ async function generate(contents) {
       }
     }
   }
-  if (/high demand|temporar|unavailable|overloaded|quota|rate|429|503/i.test(lastErr.message))
+  if (/high demand|temporar|unavailable|overloaded|quota|rate limit|\b429\b|\b503\b/i.test(lastErr.message))
     throw new Error("All AI models are busy right now. Please try again in a minute.");
   throw lastErr;
 }
