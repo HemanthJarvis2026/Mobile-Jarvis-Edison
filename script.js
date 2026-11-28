@@ -42,6 +42,81 @@ function add(text, cls) {
 }
 MEMORY.forEach(m => add((m.role === 'user' ? 'YOU: ' : 'J.A.R.V.I.S: ') + m.text, m.role === 'user' ? 'user' : 'ai'));
 
+// ===== 2.5. PERMISSIONS =====
+const PERMISSIONS = Object.freeze({
+  youtube: 'open YouTube in a new tab',
+  google: 'open Google in a new tab',
+  links: 'open a web link in a new tab',
+  time: "read your device's date and time",
+  weather: 'get Hyderabad weather from Open-Meteo',
+  news: 'get top stories from Hacker News',
+  crypto: 'get the Bitcoin price from CoinGecko',
+  wikipedia: 'search Wikipedia',
+  image: 'pick an image to send to Gemini with your question',
+  mic: 'use your microphone for voice input'
+});
+const DENIED = 'Permission denied, Boss.';
+
+// Only "Always allow" choices are saved
+let GRANTED = new Set();
+try {
+  const saved = JSON.parse(localStorage.getItem('jarvis_permissions') || '[]');
+  if (Array.isArray(saved)) GRANTED = new Set(saved.filter(k => Object.hasOwn(PERMISSIONS, k)));
+} catch (e) {
+  localStorage.removeItem('jarvis_permissions');
+}
+
+const pendingRequests = new Map(); // tool -> { promise, finish }
+
+function askPermission(tool, detail = '') {
+  if (GRANTED.has(tool)) return Promise.resolve(true);
+  if (pendingRequests.has(tool)) return pendingRequests.get(tool).promise;
+
+  let finish;
+  const promise = new Promise(resolve => {
+    const box = document.createElement('div');
+    box.className = 'ai permission';
+
+    const label = document.createElement('div');
+    label.textContent = 'J.A.R.V.I.S: Boss, may I ' + PERMISSIONS[tool] + '?' +
+      (detail ? ' (' + detail + ')' : '');
+    box.appendChild(label);
+
+    finish = (allowed, remember = false) => {
+      if (!pendingRequests.has(tool)) return;
+      pendingRequests.delete(tool);
+      if (allowed && remember) {
+        GRANTED.add(tool);
+        localStorage.setItem('jarvis_permissions', JSON.stringify([...GRANTED]));
+      }
+      box.remove();
+      add('J.A.R.V.I.S: ' + tool + (allowed ? ' access allowed.' : ' access denied.'), 'ai');
+      resolve(allowed);
+    };
+
+    [['Allow once', true, false], ['Always allow', true, true], ['Deny', false, false]]
+      .forEach(([name, allowed, remember]) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = name;
+        btn.style.cssText = 'margin:6px 6px 0 0;padding:8px 12px;cursor:pointer;';
+        btn.addEventListener('click', () => finish(allowed, remember));
+        box.appendChild(btn);
+      });
+
+    chat.appendChild(box);
+    chat.scrollTop = chat.scrollHeight;
+  });
+
+  pendingRequests.set(tool, { promise, finish });
+  return promise;
+}
+
+function resetPermissions() {
+  GRANTED.clear();
+  localStorage.removeItem('jarvis_permissions');
+}
+
 // ===== 3. TOOLS =====
 async function fetchToolJson(url, options = {}, timeoutMs = 10000) {
   const controller = new AbortController();
@@ -63,28 +138,31 @@ function openTab(url) { window.open(url, '_blank', 'noopener,noreferrer'); }
 
 async function handleTools(text) {
   if (/^\s*(?:please\s+)?(?:open\s+youtube|youtube\s+open|youtube)(?:\s+please)?[.!?]*\s*$/i.test(text)) {
+    if (!await askPermission('youtube')) return DENIED;
     openTab('https://youtube.com');
     return 'Opening YouTube, Boss.';
   }
   if (/^\s*(?:please\s+)?(?:open\s+google|google\s+open|google)(?:\s+please)?[.!?]*\s*$/i.test(text)) {
+    if (!await askPermission('google')) return DENIED;
     openTab('https://google.com');
     return 'Opening Google, Boss.';
   }
 
   const urlCommand = text.match(/^\s*(?:open|visit|go to)\s+(https?:\/\/\S+)\s*$/i);
   if (urlCommand) {
-    try {
-      const dest = new URL(urlCommand[1]);
-      if (dest.protocol !== 'https:' && dest.protocol !== 'http:') return 'Only http and https links can be opened.';
-      openTab(dest.href);
-      return 'Opening ' + dest.hostname + ', Boss.';
-    } catch (e) { return 'That link does not look valid.'; }
+    let dest;
+    try { dest = new URL(urlCommand[1]); } catch (e) { return 'That link does not look valid.'; }
+    if (dest.protocol !== 'https:' && dest.protocol !== 'http:') return 'Only http and https links can be opened.';
+    if (!await askPermission('links', dest.href)) return DENIED;
+    openTab(dest.href);
+    return 'Opening ' + dest.hostname + ', Boss.';
   }
 
   if (/^\s*(?:google\s+search|search\s+(?:on\s+)?google)(?:\s+for)?\s*$/i.test(text)) return 'Tell me what to search for on Google.';
   const googleSearch = text.match(/^\s*(?:google\s+search|search\s+(?:on\s+)?google)(?:\s+for)?\s+(.+?)\s*$/i);
   if (googleSearch) {
     const q = googleSearch[1].trim();
+    if (!await askPermission('google', 'search: ' + q)) return DENIED;
     openTab('https://www.google.com/search?q=' + encodeURIComponent(q));
     return 'Searching Google for ' + q + ', Boss.';
   }
@@ -95,15 +173,18 @@ async function handleTools(text) {
     text.match(/^\s*search\s+(?:on\s+)?youtube(?:\s+for)?\s+(.+?)\s*$/i)
   )?.[1]?.trim();
   if (videoQuery) {
+    if (!await askPermission('youtube', 'search: ' + videoQuery)) return DENIED;
     openTab('https://www.youtube.com/results?search_query=' + encodeURIComponent(videoQuery));
     return 'Searching YouTube for ' + videoQuery + ', Boss.';
   }
 
   if (/\b(?:current\s+time|time\s+now|what\s+time)\b/i.test(text)) {
+    if (!await askPermission('time')) return DENIED;
     return 'Current time: ' + new Date().toLocaleString();
   }
 
   if (/^\s*(?:(?:what(?:'s| is) )?the )?weather(?:\s+(?:now|today))?\??\s*$/i.test(text)) {
+    if (!await askPermission('weather')) return DENIED;
     try {
       // Hyderabad coordinates
       const data = await fetchToolJson('https://api.open-meteo.com/v1/forecast?latitude=17.385&longitude=78.4867&current_weather=true');
@@ -114,6 +195,7 @@ async function handleTools(text) {
   }
 
   if (/^\s*(?:latest\s+|top\s+)?news\s*$/i.test(text)) {
+    if (!await askPermission('news')) return DENIED;
     try {
       const ids = await fetchToolJson('https://hacker-news.firebaseio.com/v0/topstories.json');
       const items = await Promise.all(ids.slice(0, 3).map(id => fetchToolJson('https://hacker-news.firebaseio.com/v0/item/' + id + '.json')));
@@ -122,6 +204,7 @@ async function handleTools(text) {
   }
 
   if (/\b(?:bitcoin|btc)\b/i.test(text) && !/\bplan\b/i.test(text)) {
+    if (!await askPermission('crypto')) return DENIED;
     try {
       const data = await fetchToolJson('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd,inr');
       return 'Bitcoin: $' + data.bitcoin.usd.toLocaleString() + ' / ₹' + data.bitcoin.inr.toLocaleString();
@@ -131,6 +214,7 @@ async function handleTools(text) {
   const searchMatch = text.match(/^\s*(?:search|look up)\s+(?:for\s+)?(.+?)\s*$/i);
   if (searchMatch) {
     const q = searchMatch[1].trim();
+    if (!await askPermission('wikipedia', 'search: ' + q)) return DENIED;
     try {
       const url = 'https://en.wikipedia.org/w/api.php?action=query&list=search&srlimit=1&srsearch=' +
         encodeURIComponent(q) + '&format=json&origin=*';
@@ -177,7 +261,7 @@ function parseAgentToolPlan(responseText) {
   return [...new Set(parsed
     .filter(i => typeof i === 'string')
     .map(i => i.trim().toLowerCase())
-    .filter(i => i in AGENT_TOOLS))];
+    .filter(i => Object.hasOwn(AGENT_TOOLS, i)))];
 }
 
 async function runAgent(goal) {
@@ -240,7 +324,9 @@ async function callGemini(p, image = null) {
 
 // ===== 5. IMAGE INPUT =====
 let pendingImage = null;
-camBtn?.addEventListener('click', () => imgInput?.click());
+camBtn?.addEventListener('click', async () => {
+  if (await askPermission('image')) imgInput?.click();
+});
 imgInput?.addEventListener('change', () => {
   const file = imgInput.files[0];
   if (!file) return;
@@ -254,11 +340,20 @@ imgInput?.addEventListener('change', () => {
 });
 
 // ===== 6. SEND =====
+let busy = false;
 async function send() {
   const text = input.value.trim();
-  if (!text) return;
+  if (!text || busy) return;
   input.value = '';
   add('YOU: ' + text, 'user');
+
+  if (/^\s*(?:reset|revoke)\s+permissions\s*$/i.test(text)) {
+    resetPermissions();
+    add('J.A.R.V.I.S: Saved permissions cleared, Boss.', 'ai');
+    return;
+  }
+
+  busy = true;
   try {
     let reply;
     if (isAgentModeRequest(text)) reply = await runAgent(text);
@@ -271,6 +366,8 @@ async function send() {
     speak(reply);
   } catch (e) {
     add('J.A.R.V.I.S: Error — ' + e.message, 'ai');
+  } finally {
+    busy = false;
   }
 }
 
@@ -289,13 +386,20 @@ if (SpeechRec && micBtn) {
   const rec = new SpeechRec();
   rec.lang = 'te-IN';
   rec.onresult = e => { input.value = e.results[0][0].transcript; send(); };
-  micBtn.addEventListener('click', () => rec.start());
+  micBtn.addEventListener('click', async () => {
+    if (!await askPermission('mic')) return;
+    try { rec.start(); } catch (e) { /* already listening */ }
+  });
 } else if (micBtn) {
   micBtn.style.display = 'none';
 }
 
 clearBtn?.addEventListener('click', () => {
+  // Deny open prompts so send() doesn't stay stuck
+  [...pendingRequests.values()].forEach(r => r.finish(false));
+  resetPermissions();
   MEMORY = [];
   localStorage.removeItem('jarvis_memory');
   chat.innerHTML = '';
+  // A just-denied request may still post its reply after this
 });
